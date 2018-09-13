@@ -1,0 +1,136 @@
+1. VirtualBox
+1) Blockchain ->메뉴->설정 -> 네트워크 -> 어댑터2 -> 다음에 연겨됨: 어댑터에 브리지
+                                                     이름         : 자신의 무선 랜카드
+2. 윈도우 Desktop
+시작->실행->cmd.exe -> ipconfig /all
+- 윈도우 Desktop의 IP 확인
+
+3. putty로 블록체인 VirtualBox접속
+  user01/qwer1234
+
+1)user01@ubuntu:~$ ifconfig -a
+ - enp0s8 랜카드 등록 확인
+
+2)랜카드 IP와 GW 추가
+user01@ubuntu:~$ sudo ifconfig enp0s8 192.168.xxx.xxx netmask 255.255.255.0 up
+user01@ubuntu:~$ sudo route add default gw 192.168.xxx.xxx   
+
+
+
+4. 버전 확인
+user01@ubuntu:~$ nodejs --version
+v7.10.1
+
+user01@ubuntu:~$ npm --version
+4.2.0
+
+user01@ubuntu:~$ geth -h
+
+user01@ubuntu:~$ truffle --version
+Truffle v4.1.13 - a development framework for Ethereum
+
+
+user01@ubuntu:~$ ganache-cli --version
+Ganache CLI v6.1.6 (ganache-core: 2.1.5)
+
+
+
+5. private network 구축
+1) 제네시스 파일 생성
+user01@ubuntu:~$ mkdir DappDemo
+user01@ubuntu:~$ cd DappDemo/
+user01@ubuntu:~/DappDemo$ vi genesis.json
+
+2) 제네시스 블록 생성(초기화)
+user01@ubuntu:~/DappDemo$ geth --datadir /home/user01/DappDemo init /home/user01/DappDemo/genesis.json
+
+3) geth 실행
+
+user01@ubuntu:~/DappDemo$ nohup geth --networkid 4649 --nodiscover --datadir /home/user01/DappDemo --rpc --rpcaddr "0.0.0.0" --rpcport 8545 --rpccorsdomain "*" --rpcapi "admin,db,eth,debug,miner,net,shh,txpool,personal,web3" --verbosity 5 2>>/home/user01/DappDemo/geth.log &
+
+프로세스 종료
+  ps -eaf | grep geth     (프로세스 번호)
+  kill -9  프로세스번호
+
+4) putty 두대 열기
+- 로그 모니터링  :
+user01@ubuntu:~$ cd DappDemo/
+user01@ubuntu:~/DappDemo$ tail -f geth.log
+
+
+- attach 접속
+user01@ubuntu:~$ cd DappDemo/
+user01@ubuntu:~/DappDemo$ geth attach http://localhost:8545
+
+
+5)계정 생성
+> personal.newAccount("pass0")
+> personal.newAccount("pass1")
+> personal.newAccount("pass2")
+> personal.newAccount("pass3")
+
+
+6)계정 확인
+> eth.accounts
+> personal.listAccounts
+
+7)잔고 확인
+> eth.getBalance(eth.accounts[0])
+> eth.getBalance(eth.coinbase)
+>
+
+8)채굴
+> miner.start()
+null
+
+> eth.getBalance(eth.accounts[0])
+> eth.blockNumber    
+
+> miner.stop()
+
+
+9) 이체
+> personal.unlockAccount(eth.accounts[0])     #300초 동안 해제, 연장  인수, 0 ?Geth 프로세스 종료전까지
+> eth.sendTransaction({from:eth.accounts[0], to:eth.accounts[1], value:web3.toWei(10,”ether”})
+
+
+6. Truffle 
+1) geth 중지 
+user01@ubuntu:~/DappDemo$ ps -eaf | grep geth
+user01@ubuntu:~/DappDemo$ kill -9 2876
+
+2) user01@ubuntu:~$ ganache-cli
+
+3) Truffle  metacoin demo
+user01@ubuntu:~$ mkdir metacoin
+user01@ubuntu:~$ cd metacoin/
+user01@ubuntu:~/metacoin$ truffle unbox metacoin
+user01@ubuntu:~/metacoin$ ls
+user01@ubuntu:~/metacoin$cd contracts
+user01@ubuntu:~/metacoin/contracts$ cat MetaCoin.sol
+
+4)컴파일
+user01@ubuntu:~/metacoin$ truffle develop
+truffle(develop)> compile
+truffle(develop)> migrate
+
+5) 배포 확인
+truffle(develop)> m = MetaCoin.at("0xf25186b5081ff5ce73482ad761db0eb0d25abfbf")
+- at 를 이용해 메타코인 주소를 저장.
+
+6) 잔고 확인 ? getBalance 함수호출
+ truffle(develop)> m.getBalance(web3.eth.accounts[0])
+BigNumber { s: 1, e: 4, c: [ 10000 ] }
+
+truffle(develop)> m.getBalance(web3.eth.accounts[1])
+BigNumber { s: 1, e: 0, c: [ 0 ] }
+
+7) 송금 ? sendCoin 함수.
+truffle(develop)> m.sendCoin(web3.eth.accounts[1],1000)
+
+잔고확인
+truffle(develop)> m.getBalance(web3.eth.accounts[0])
+BigNumber { s: 1, e: 3, c: [ 9000 ] }
+truffle(develop)> m.getBalance(web3.eth.accounts[1])
+BigNumber { s: 1, e: 3, c: [ 1000 ] }
+
